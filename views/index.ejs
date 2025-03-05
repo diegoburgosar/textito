@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Textito - Convertidor de Texto a Voz</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Textito</h1>
+        <p class="subtitle">Convertidor de Texto a Voz</p>
+        
+        <form action="/convert" method="post" onsubmit="return validateForm()">
+            <textarea 
+                name="text" 
+                id="text-input"
+                placeholder="Escribe tu texto aquí (máximo 5000 caracteres)..."
+                required
+                maxlength="5000"
+                oninput="updateCharCount()"></textarea>
+            
+            <div class="controls">
+                <span id="char-count">0/5000 caracteres</span>
+                <button type="submit">Convertir a Audio</button>
+            </div>
+        </form>
+        <div id="error-message" class="error"></div>
+    </div>
+
+    <script>
+        console.log('JavaScript cargado');
+        
+        function updateCharCount() {
+            const text = document.getElementById('text-input').value;
+            const length = new TextEncoder().encode(text).length;
+            document.getElementById('char-count').textContent = `${length}/5000 bytes`;
+            console.log('Caracteres actualizados:', length);
+        }
+
+        function validateForm() {
+            console.log('Validando formulario');
+            const text = document.getElementById('text-input').value;
+            const length = new TextEncoder().encode(text).length;
+            
+            if (length > 5000) {
+                document.getElementById('error-message').textContent = 
+                    'El texto excede el límite de 5000 bytes';
+                return false;
+            }
+            
+            if (length === 0) {
+                document.getElementById('error-message').textContent = 
+                    'Por favor, ingresa algún texto';
+                return false;
+            }
+            
+            return true;
+        }
+    </script>
+</body>
+</html> 

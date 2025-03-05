@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Textito - Convertidor de Texto a Voz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Textito</h1>
+        <p class="subtitle">Convertidor de Texto a Voz</p>
+        
+        <form action="/convert" method="post" onsubmit="return validateForm()">
+            <textarea 
+                name="text" 
+                id="text-input"
+                placeholder="Escribe tu texto aquí (máximo 5000 caracteres)..."
+                required
+                maxlength="5000"
+                oninput="updateCharCount()"></textarea>
+            
+            <div class="controls">
+                <span id="char-count">0/5000 caracteres</span>
+                <button type="submit">Convertir a Audio</button>
+            </div>
+        </form>
+        <div id="error-message" class="error"></div>
+    </div>
+
+    <script>
+        function updateCharCount() {
+            const text = document.getElementById('text-input').value;
+            const length = new TextEncoder().encode(text).length; // Cuenta bytes UTF-8
+            document.getElementById('char-count').textContent = `${length}/5000 bytes`;
+            
+            // Actualizar color si se acerca al límite
+            const charCount = document.getElementById('char-count');
+            if (length > 4500) {
+                charCount.style.color = 'red';
+            } else if (length > 4000) {
+                charCount.style.color = 'orange';
+            } else {
+                charCount.style.color = '#666';
+            }
+        }
+
+        function validateForm() {
+            const text = document.getElementById('text-input').value;
+            const length = new TextEncoder().encode(text).length;
+            
+            if (length > 5000) {
+                document.getElementById('error-message').textContent = 
+                    'El texto excede el límite de 5000 bytes';
+                return false;
+            }
+            
+            if (length === 0) {
+                document.getElementById('error-message').textContent = 
+                    'Por favor, ingresa algún texto';
+                return false;
+            }
+            
+            return true;
+        }
+    </script>
+</body>
+</html>
