@@ -1,31 +1,20 @@
 require('dotenv').config();
 const express = require('express');
 const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
-const fs = require('fs').promises;
 const path = require('path');
-
-// Configurar credenciales
-process.env.GOOGLE_APPLICATION_CREDENTIALS = process.env.GOOGLE_CREDENTIALS_FILE;
 
 const app = express();
 const port = process.env.PORT || 4000;
 
-console.log('Iniciando aplicación...');
-console.log('Directorio actual:', __dirname);
-
 // Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({limit: '10mb'}));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static('static'));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-console.log('Middleware configurado');
-console.log('Directorio de vistas:', path.join(__dirname, 'views'));
-
 // Rutas
 app.get('/', (req, res) => {
-    console.log('GET / - Renderizando index');
     try {
         res.render('index');
     } catch (error) {
@@ -36,29 +25,30 @@ app.get('/', (req, res) => {
 
 app.post('/convert', async (req, res) => {
     console.log('POST /convert - Iniciando conversión');
-    console.log('Body recibido:', req.body);  // Debug
     
     try {
-        const text = req.body.text;
-        
-        if (!text) {
-            console.log('No se recibió texto');
-            return res.status(400).json({
-                error: 'No se recibió texto para convertir'
-            });
-        }
-
+        const { text } = req.body;
         console.log('Texto recibido:', text);
         
-        if (Buffer.byteLength(text, 'utf8') > 5000) {
+        if (!text || typeof text !== 'string') {
             return res.status(400).json({
-                error: 'El texto es demasiado largo. Máximo 5000 bytes.'
+                error: 'Texto inválido o no proporcionado'
             });
         }
 
-        console.log('Creando cliente Text-to-Speech');
+        const byteLength = Buffer.byteLength(text, 'utf8');
+        console.log('Longitud en bytes:', byteLength);
+        
+        if (byteLength > 5000) {
+            return res.status(400).json({
+                error: 'El texto excede el límite de 5000 bytes'
+            });
+        }
+
+        // Crear cliente Text-to-Speech
         const client = new TextToSpeechClient();
         
+        // Configurar la solicitud
         const request = {
             input: { text },
             voice: {
@@ -69,28 +59,27 @@ app.post('/convert', async (req, res) => {
             audioConfig: { audioEncoding: 'MP3' }
         };
 
+        // Generar el audio
         console.log('Generando audio...');
         const [response] = await client.synthesizeSpeech(request);
-        
-        const audioPath = path.join(__dirname, 'static', 'audio.mp3');
-        console.log('Guardando audio en:', audioPath);
-        
-        await fs.writeFile(audioPath, response.audioContent, 'binary');
-        console.log('Audio guardado correctamente');
-        
-        res.download(audioPath);
+        console.log('Audio generado correctamente');
+
+        // Enviar la respuesta directamente
+        res.set({
+            'Content-Type': 'audio/mpeg',
+            'Content-Length': response.audioContent.length
+        }).send(response.audioContent);
 
     } catch (error) {
         console.error('Error en /convert:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ 
+            error: 'Error al generar el audio',
+            details: error.message 
+        });
     }
 });
 
+// Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
-    console.log('Variables de entorno:', {
-        PORT: process.env.PORT,
-        NODE_ENV: process.env.NODE_ENV,
-        GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS
-    });
 }); 

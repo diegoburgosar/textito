@@ -39,7 +39,6 @@
             const text = document.getElementById('text-input').value;
             const length = new TextEncoder().encode(text).length;
             document.getElementById('char-count').textContent = `${length}/5000 bytes`;
-            console.log('Caracteres actualizados:', length);
         }
 
         function showProgress() {
@@ -54,13 +53,14 @@
 
         document.getElementById('convert-form').addEventListener('submit', async function(event) {
             event.preventDefault();
-            console.log('Formulario enviado');
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = '';
             
             const text = document.getElementById('text-input').value;
-            console.log('Texto a enviar:', text);
+            console.log('Enviando texto:', text);
 
             if (!text.trim()) {
-                document.getElementById('error-message').textContent = 'Por favor, ingresa algún texto';
+                errorElement.textContent = 'Por favor, ingresa algún texto';
                 return;
             }
 
@@ -75,25 +75,26 @@
                     body: JSON.stringify({ text: text })
                 });
 
-                console.log('Respuesta recibida:', response.status);
-
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || 'Error en la conversión');
+                    throw new Error(errorData.error || errorData.details || 'Error en la conversión');
                 }
 
+                // Descargar el audio
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
+                a.style.display = 'none';
                 a.href = url;
                 a.download = 'audio.mp3';
                 document.body.appendChild(a);
                 a.click();
                 window.URL.revokeObjectURL(url);
                 document.body.removeChild(a);
+
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('error-message').textContent = error.message;
+                errorElement.textContent = error.message;
             } finally {
                 hideProgress();
             }
