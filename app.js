@@ -4,8 +4,11 @@ const { TextToSpeechClient } = require('@google-cloud/text-to-speech');
 const fs = require('fs').promises;
 const path = require('path');
 
+// Configurar credenciales
+process.env.GOOGLE_APPLICATION_CREDENTIALS = process.env.GOOGLE_CREDENTIALS_FILE;
+
 const app = express();
-const port = process.env.PORT || 8080;
+const port = process.env.PORT || 4000;
 
 console.log('Iniciando aplicación...');
 console.log('Directorio actual:', __dirname);
@@ -33,12 +36,21 @@ app.get('/', (req, res) => {
 
 app.post('/convert', async (req, res) => {
     console.log('POST /convert - Iniciando conversión');
+    console.log('Body recibido:', req.body);  // Debug
+    
     try {
         const text = req.body.text;
-        console.log('Texto a convertir:', text);
+        
+        if (!text) {
+            console.log('No se recibió texto');
+            return res.status(400).json({
+                error: 'No se recibió texto para convertir'
+            });
+        }
+
+        console.log('Texto recibido:', text);
         
         if (Buffer.byteLength(text, 'utf8') > 5000) {
-            console.log('Texto demasiado largo');
             return res.status(400).json({
                 error: 'El texto es demasiado largo. Máximo 5000 bytes.'
             });
@@ -78,6 +90,7 @@ app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
     console.log('Variables de entorno:', {
         PORT: process.env.PORT,
-        NODE_ENV: process.env.NODE_ENV
+        NODE_ENV: process.env.NODE_ENV,
+        GOOGLE_APPLICATION_CREDENTIALS: process.env.GOOGLE_APPLICATION_CREDENTIALS
     });
 }); 

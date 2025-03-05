@@ -9,7 +9,7 @@
         <h1>Textito</h1>
         <p class="subtitle">Convertidor de Texto a Voz</p>
         
-        <form action="/convert" method="post" onsubmit="return validateForm()">
+        <form id="convert-form">
             <textarea 
                 name="text" 
                 id="text-input"
@@ -20,7 +20,13 @@
             
             <div class="controls">
                 <span id="char-count">0/5000 caracteres</span>
-                <button type="submit">Convertir a Audio</button>
+                <div class="right-controls">
+                    <div id="progress" class="progress-container" style="display: none;">
+                        <div class="progress-text">Generando audio...</div>
+                        <div class="spinner"></div>
+                    </div>
+                    <button type="submit" id="submit-btn">Convertir a Audio</button>
+                </div>
             </div>
         </form>
         <div id="error-message" class="error"></div>
@@ -36,25 +42,62 @@
             console.log('Caracteres actualizados:', length);
         }
 
-        function validateForm() {
-            console.log('Validando formulario');
-            const text = document.getElementById('text-input').value;
-            const length = new TextEncoder().encode(text).length;
-            
-            if (length > 5000) {
-                document.getElementById('error-message').textContent = 
-                    'El texto excede el límite de 5000 bytes';
-                return false;
-            }
-            
-            if (length === 0) {
-                document.getElementById('error-message').textContent = 
-                    'Por favor, ingresa algún texto';
-                return false;
-            }
-            
-            return true;
+        function showProgress() {
+            document.getElementById('progress').style.display = 'flex';
+            document.getElementById('submit-btn').style.display = 'none';
         }
+
+        function hideProgress() {
+            document.getElementById('progress').style.display = 'none';
+            document.getElementById('submit-btn').style.display = 'block';
+        }
+
+        document.getElementById('convert-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            console.log('Formulario enviado');
+            
+            const text = document.getElementById('text-input').value;
+            console.log('Texto a enviar:', text);
+
+            if (!text.trim()) {
+                document.getElementById('error-message').textContent = 'Por favor, ingresa algún texto';
+                return;
+            }
+
+            try {
+                showProgress();
+                
+                const response = await fetch('/convert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text: text })
+                });
+
+                console.log('Respuesta recibida:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Error en la conversión');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'audio.mp3';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('error-message').textContent = error.message;
+            } finally {
+                hideProgress();
+            }
+        });
     </script>
 </body>
 </html> 
