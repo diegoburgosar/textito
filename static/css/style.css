@@ -1,90 +1,110 @@
-body {
-    font-family: Arial, sans-serif;
+/* Reset y estilos base */
+* {
     margin: 0;
-    padding: 20px;
-    background-color: #f5f5f5;
+    padding: 0;
+    box-sizing: border-box;
 }
 
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    background-color: #f5f5f5;
+    min-height: 100vh;
+}
+
+/* Contenedor principal */
 .container {
     max-width: 800px;
     margin: 0 auto;
     background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 2rem;
 }
 
+/* Encabezado */
 h1 {
-    color: #333;
-    margin-bottom: 5px;
+    color: #2C3E50;
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
 }
 
 .subtitle {
-    color: #666;
-    margin-top: 0;
+    color: #7F8C8D;
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
 }
 
+/* Área de texto */
 textarea {
     width: 100%;
-    height: 200px;
-    padding: 10px;
-    margin: 20px 0;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 16px;
+    min-height: 150px;
+    padding: 1rem;
+    border: 2px solid #E0E0E0;
+    border-radius: 12px;
+    font-size: 1rem;
+    line-height: 1.5;
     resize: vertical;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
 }
 
+textarea:focus {
+    border-color: #4CAF50;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+/* Controles */
 .controls {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 #char-count {
-    color: #666;
+    color: #7F8C8D;
+    font-size: 0.9rem;
 }
 
+/* Botón */
 button {
     background-color: #4CAF50;
     color: white;
-    padding: 10px 20px;
+    width: 100%;
+    padding: 1rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
-    font-size: 16px;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
     background-color: #45a049;
 }
 
-.error {
-    color: red;
-    margin-top: 10px;
+button:active {
+    transform: scale(0.98);
 }
 
-.right-controls {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
+/* Spinner y progreso */
 .progress-container {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    gap: 0.8rem;
+    padding: 1rem;
 }
 
 .progress-text {
-    color: #666;
-    font-size: 14px;
+    color: #7F8C8D;
+    font-size: 0.9rem;
 }
 
 .spinner {
-    width: 20px;
-    height: 20px;
-    border: 3px solid #f3f3f3;
+    width: 1.2rem;
+    height: 1.2rem;
+    border: 3px solid #E0E0E0;
     border-top: 3px solid #4CAF50;
     border-radius: 50%;
     animation: spin 1s linear infinite;
@@ -93,4 +113,62 @@ button:hover {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Mensajes de error */
+.error {
+    color: #E74C3C;
+    margin-top: 0.8rem;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        background-color: white;
+    }
+
+    .container {
+        padding: 1.2rem;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    textarea {
+        flex-grow: 1;
+        min-height: 120px;
+        font-size: 1rem;
+        margin-bottom: 0.8rem;
+    }
+
+    .controls {
+        margin-top: auto;
+        padding-bottom: env(safe-area-inset-bottom, 1rem);
+    }
+
+    button {
+        padding: 1rem;
+        margin-bottom: env(safe-area-inset-bottom, 0.5rem);
+    }
+}
+
+/* iPhone específico */
+@media (max-width: 390px) {
+    .container {
+        padding: 1rem;
+    }
+
+    textarea {
+        border-radius: 8px;
+    }
+
+    button {
+        border-radius: 8px;
+    }
 }

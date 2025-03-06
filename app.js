@@ -6,6 +6,21 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 4000;
 
+// Configuración de credenciales según el entorno
+let textToSpeechClient;
+try {
+    if (process.env.NODE_ENV === 'production') {
+        textToSpeechClient = new TextToSpeechClient();
+    } else {
+        // Para desarrollo local
+        textToSpeechClient = new TextToSpeechClient({
+            keyFilename: './diegoburgos-com-8ab63a971ce9.json'
+        });
+    }
+} catch (error) {
+    console.error('Error al inicializar Text-to-Speech:', error);
+}
+
 // Middleware
 app.use(express.json({limit: '10mb'}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -45,9 +60,6 @@ app.post('/convert', async (req, res) => {
             });
         }
 
-        // Crear cliente Text-to-Speech
-        const client = new TextToSpeechClient();
-        
         // Configurar la solicitud
         const request = {
             input: { text },
@@ -61,10 +73,10 @@ app.post('/convert', async (req, res) => {
 
         // Generar el audio
         console.log('Generando audio...');
-        const [response] = await client.synthesizeSpeech(request);
+        const [response] = await textToSpeechClient.synthesizeSpeech(request);
         console.log('Audio generado correctamente');
 
-        // Enviar la respuesta directamente
+        // Enviar la respuesta
         res.set({
             'Content-Type': 'audio/mpeg',
             'Content-Length': response.audioContent.length
@@ -82,4 +94,5 @@ app.post('/convert', async (req, res) => {
 // Iniciar servidor
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
+    console.log('Modo:', process.env.NODE_ENV || 'development');
 }); 

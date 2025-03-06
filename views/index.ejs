@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Textito - Convertidor de Texto a Voz</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -13,14 +14,14 @@
             <textarea 
                 name="text" 
                 id="text-input"
-                placeholder="Escribe tu texto aquí (máximo 5000 caracteres)..."
+                placeholder="Escribe tu texto aquí..."
                 required
                 maxlength="5000"
                 oninput="updateCharCount()"></textarea>
             
             <div class="controls">
-                <span id="char-count">0/5000 caracteres</span>
                 <div class="right-controls">
+                    <span id="char-count">0/5000 caracteres</span>
                     <div id="progress" class="progress-container" style="display: none;">
                         <div class="progress-text">Generando audio...</div>
                         <div class="spinner"></div>
@@ -30,8 +31,42 @@
             </div>
         </form>
         <div id="error-message" class="error"></div>
+        
+        <!-- Nuevo Reproductor de Audio -->
+        <div id="audio-player" class="audio-player" style="display: none;">
+            <div class="player-header">
+                <span class="time-display">
+                    <span id="current-time">0:00</span> / 
+                    <span id="total-time">0:00</span>
+                </span>
+                <div class="speed-control">
+                    <button class="speed-btn active" data-speed="1">1x</button>
+                    <button class="speed-btn" data-speed="1.25">1.25x</button>
+                    <button class="speed-btn" data-speed="1.75">1.75x</button>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-track">
+                    <div class="progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="player-controls">
+                <button class="control-btn rewind" title="Retroceder 15 segundos">
+                    -15s
+                </button>
+                <button class="control-btn play-pause" title="Reproducir/Pausar">
+                    ▶
+                </button>
+                <button class="control-btn forward" title="Adelantar 15 segundos">
+                    +15s
+                </button>
+            </div>
+        </div>
     </div>
 
+    <script src="/js/audioPlayer.js"></script>
     <script>
         console.log('JavaScript cargado');
         
@@ -83,14 +118,7 @@
                 // Descargar el audio
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = 'audio.mp3';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
+                window.audioPlayer.setAudio(url);
 
             } catch (error) {
                 console.error('Error:', error);
