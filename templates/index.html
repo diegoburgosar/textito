@@ -1,15 +1,62 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Textito - Convertidor de Texto a Voz</title>
+    <title>🎙️ Textito - Audio y Texto</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+        /* Estilos inline para asegurar que se apliquen */
+        .new-header {
+            background: linear-gradient(45deg, #4CAF50, #2196F3);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+        }
+        .new-header h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .new-header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.2rem;
+        }
+        .features {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        .feature {
+            text-align: center;
+            padding: 1rem;
+        }
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+    </style>
 </head>
 <body>
+    <div class="new-header">
+        <h1>🎙️ Textito</h1>
+        <p>Tu asistente de voz y texto</p>
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🗣️</div>
+                <p>Texto a Voz</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📝</div>
+                <p>Voz a Texto</p>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
-        <h1>Textito</h1>
-        <p class="subtitle">Convertidor de Texto a Voz</p>
-        
+        <h2>Convertir Texto a Voz</h2>
         <form action="/convert" method="post" onsubmit="return validateForm()">
             <textarea 
                 name="text" 
@@ -21,10 +68,16 @@
             
             <div class="controls">
                 <span id="char-count">0/5000 caracteres</span>
-                <button type="submit">Convertir a Audio</button>
+                <button type="submit">🔊 Convertir a Audio</button>
             </div>
         </form>
         <div id="error-message" class="error"></div>
+    </div>
+
+    <!-- Contenedor del transcriptor -->
+    <div id="transcriber-container" class="transcriber-section">
+        <h2>Convertir Voz a Texto</h2>
+        <p class="section-description">Sube un archivo de audio para transcribirlo a texto</p>
     </div>
 
     <template id="transcriber-template">
@@ -32,21 +85,21 @@
             <div class="upload-container">
                 <input type="file" accept="audio/*" class="file-input" id="audio-upload">
                 <label for="audio-upload" class="upload-label">
-                    <span class="upload-icon">🎤</span>
-                    <span class="upload-text">Seleccionar archivo de audio</span>
+                    <span class="upload-icon">🎙️</span>
+                    <span class="upload-text">Haz clic aquí para seleccionar un archivo de audio</span>
                 </label>
             </div>
             <div class="transcription-status" style="display: none;">
                 <div class="progress-bar">
                     <div class="progress-fill"></div>
                 </div>
-                <span class="status-text">Transcribiendo audio...</span>
+                <span class="status-text">⚡ Transcribiendo tu audio...</span>
             </div>
             <div class="transcription-result" style="display: none;">
                 <div class="result-text"></div>
                 <div class="result-controls">
                     <button class="copy-btn">📋 Copiar</button>
-                    <button class="new-btn">🔄 Nuevo audio</button>
+                    <button class="new-btn">🔄 Nuevo</button>
                 </div>
             </div>
         </div>
@@ -88,5 +141,9 @@
             return true;
         }
     </script>
+
+    <!-- Scripts de audio -->
+    <script src="{{ url_for('static', filename='js/audioTranscriber.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/audioPlayer.js') }}"></script>
 </body>
 </html>
