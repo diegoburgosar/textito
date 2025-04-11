@@ -27,6 +27,31 @@
         <div id="error-message" class="error"></div>
     </div>
 
+    <template id="transcriber-template">
+        <div class="transcriber">
+            <div class="upload-container">
+                <input type="file" accept="audio/*" class="file-input" id="audio-upload">
+                <label for="audio-upload" class="upload-label">
+                    <span class="upload-icon">🎤</span>
+                    <span class="upload-text">Seleccionar archivo de audio</span>
+                </label>
+            </div>
+            <div class="transcription-status" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <span class="status-text">Transcribiendo audio...</span>
+            </div>
+            <div class="transcription-result" style="display: none;">
+                <div class="result-text"></div>
+                <div class="result-controls">
+                    <button class="copy-btn">📋 Copiar</button>
+                    <button class="new-btn">🔄 Nuevo audio</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <script>
         function updateCharCount() {
             const text = document.getElementById('text-input').value;

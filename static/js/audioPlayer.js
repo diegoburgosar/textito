@@ -1,32 +1,66 @@
 class AudioPlayer {
-    constructor() {
-        this.audio = new Audio();
-        this.isPlaying = false;
-        this.currentSpeed = 1;
+    constructor({ url, partNumber = null, totalParts = null }) {
+        console.log('🎵 Creando nuevo reproductor...', { url, partNumber, totalParts });
         
-        // Elementos UI
-        this.container = document.getElementById('audio-player');
-        this.playPauseBtn = this.container.querySelector('.play-pause');
-        this.rewindBtn = this.container.querySelector('.rewind');
-        this.forwardBtn = this.container.querySelector('.forward');
-        this.speedBtns = this.container.querySelectorAll('.speed-btn');
-        this.progressBar = this.container.querySelector('.progress-track');
-        this.progressFill = this.container.querySelector('.progress-fill');
-        this.currentTimeEl = document.getElementById('current-time');
-        this.totalTimeEl = document.getElementById('total-time');
+        if (!url) {
+            throw new Error('URL no válida para el reproductor de audio');
+        }
 
-        // Bind events
-        this.bindEvents();
+        // 1. Crear el elemento del reproductor
+        const template = document.getElementById('audio-player-template');
+        if (!template) {
+            throw new Error('Template no encontrado');
+        }
+        
+        this.element = template.content.cloneNode(true).querySelector('.audio-player');
+        
+        // 2. Si hay múltiples partes, agregar el título
+        if (partNumber !== null && totalParts !== null) {
+            const title = document.createElement('h3');
+            title.className = 'part-title';
+            title.textContent = `Parte ${partNumber} de ${totalParts}`;
+            this.element.insertBefore(title, this.element.firstChild);
+        }
+
+        // 3. Inicializar el audio con la URL
+        console.log('Creando Audio con URL:', url);
+        this.audio = new Audio(url);
+        
+        // 4. Configurar los elementos UI
+        this.setupUI();
+        
+        // 5. Agregar al contenedor
+        const container = document.querySelector('.audio-players-container');
+        if (!container) {
+            throw new Error('Contenedor de reproductores no encontrado');
+        }
+        container.appendChild(this.element);
     }
 
-    bindEvents() {
-        // Play/Pause
-        this.playPauseBtn.addEventListener('click', () => this.togglePlay());
+    setupUI() {
+        // Elementos UI
+        this.playPauseBtn = this.element.querySelector('.play-pause');
+        this.currentTimeEl = this.element.querySelector('.current-time');
+        this.totalTimeEl = this.element.querySelector('.total-time');
+        this.progressFill = this.element.querySelector('.progress-fill');
+        this.rewindBtn = this.element.querySelector('.rewind');
+        this.forwardBtn = this.element.querySelector('.forward');
+        this.speedBtns = this.element.querySelectorAll('.speed-btn');
 
-        // Seek buttons
+        // Verificar que todos los elementos existen
+        if (!this.playPauseBtn || !this.currentTimeEl || !this.totalTimeEl || 
+            !this.progressFill || !this.rewindBtn || !this.forwardBtn) {
+            console.error('No se encontraron todos los elementos UI necesarios');
+            return;
+        }
+
+        // Event listeners
+        this.playPauseBtn.addEventListener('click', () => this.togglePlay());
         this.rewindBtn.addEventListener('click', () => this.seek(-15));
         this.forwardBtn.addEventListener('click', () => this.seek(15));
-
+        this.audio.addEventListener('timeupdate', () => this.updateProgress());
+        this.audio.addEventListener('loadedmetadata', () => this.updateTotalTime());
+        
         // Speed buttons
         this.speedBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -36,35 +70,6 @@ class AudioPlayer {
                 btn.classList.add('active');
             });
         });
-
-        // Progress bar
-        this.progressBar.addEventListener('click', (e) => {
-            const rect = this.progressBar.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            this.audio.currentTime = pos * this.audio.duration;
-        });
-
-        // Audio events
-        this.audio.addEventListener('timeupdate', () => this.updateProgress());
-        this.audio.addEventListener('loadedmetadata', () => this.updateTotalTime());
-        this.audio.addEventListener('ended', () => {
-            this.isPlaying = false;
-            this.playPauseBtn.textContent = '▶';
-        });
-    }
-
-    formatTime(seconds) {
-        const mins = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-
-    setAudio(url) {
-        this.audio.src = url;
-        this.audio.load();
-        this.container.style.display = 'block';
-        this.playPauseBtn.textContent = '▶';
-        this.isPlaying = false;
     }
 
     togglePlay() {
@@ -85,7 +90,6 @@ class AudioPlayer {
 
     setSpeed(speed) {
         this.audio.playbackRate = speed;
-        this.currentSpeed = speed;
     }
 
     updateProgress() {
@@ -97,7 +101,10 @@ class AudioPlayer {
     updateTotalTime() {
         this.totalTimeEl.textContent = this.formatTime(this.audio.duration);
     }
-}
 
-// Crear instancia global
-window.audioPlayer = new AudioPlayer(); 
+    formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+} 
