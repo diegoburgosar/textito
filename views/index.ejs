@@ -6,38 +6,13 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Textito</h1>
-        <p class="subtitle">Convertidor de Texto a Voz</p>
-        
-        <form id="convert-form">
-            <textarea 
-                name="text" 
-                id="text-input"
-                placeholder="Escribe tu texto aquí..."
-                required
-                maxlength="5000"
-                oninput="updateCharCount()"></textarea>
-            
-            <div class="controls">
-                <div class="right-controls">
-                    <span id="char-count">0/5000 caracteres</span>
-                    <div id="progress" class="progress-container" style="display: none;">
-                        <div class="progress-text">Generando audio...</div>
-                        <div class="spinner"></div>
-                    </div>
-                    <button type="submit" id="submit-btn">Convertir a Audio</button>
-                </div>
-            </div>
-        </form>
-        <div id="error-message" class="error"></div>
-        
-        <!-- Nuevo Reproductor de Audio -->
-        <div id="audio-player" class="audio-player" style="display: none;">
+    <!-- Template del reproductor -->
+    <template id="audio-player-template">
+        <div class="audio-player">
             <div class="player-header">
                 <span class="time-display">
-                    <span id="current-time">0:00</span> / 
-                    <span id="total-time">0:00</span>
+                    <span class="current-time">0:00</span> / 
+                    <span class="total-time">0:00</span>
                 </span>
                 <div class="speed-control">
                     <button class="speed-btn active" data-speed="1">1x</button>
@@ -53,80 +28,178 @@
             </div>
 
             <div class="player-controls">
-                <button class="control-btn rewind" title="Retroceder 15 segundos">
-                    -15s
-                </button>
-                <button class="control-btn play-pause" title="Reproducir/Pausar">
-                    ▶
-                </button>
-                <button class="control-btn forward" title="Adelantar 15 segundos">
-                    +15s
-                </button>
+                <button class="control-btn rewind">-15s</button>
+                <button class="control-btn play-pause">▶</button>
+                <button class="control-btn forward">+15s</button>
             </div>
+        </div>
+    </template>
+
+    <!-- Contenido principal -->
+    <div class="container">
+        <h1>Textito</h1>
+        <p class="subtitle">Convertidor de Texto a Voz</p>
+        
+        <form id="convert-form">
+            <textarea 
+                name="text" 
+                id="text-input"
+                placeholder="Escribe tu texto aquí..."
+                required
+                maxlength="40000"
+                oninput="updateCharCount()"></textarea>
+            
+            <div class="controls">
+                <div class="right-controls">
+                    <span id="char-count">0/40000 caracteres</span>
+                    <div id="progress" class="progress-container" style="display: none;">
+                        <div class="progress-text">Generando audio...</div>
+                        <div class="spinner"></div>
+                    </div>
+                    <button type="submit" id="submit-btn">Convertir a Audio</button>
+                </div>
+            </div>
+        </form>
+        <div id="error-message" class="error"></div>
+        
+        <!-- Contenedor para los reproductores -->
+        <div class="audio-players-container"></div>
+
+        <!-- Sección de transcripción de audio -->
+        <div class="transcription-section">
+            <h2>Convertir Audio a Texto</h2>
+            <form id="transcribe-form" class="upload-form">
+                <div class="file-upload">
+                    <input type="file" 
+                           id="audio-file" 
+                           accept="audio/x-m4a,audio/m4a,audio/mp3,audio/wav,audio/mpeg,audio/webm,audio/aac" 
+                           required>
+                    <label for="audio-file" class="upload-label">
+                        <span>🎤</span>
+                        <span>Seleccionar archivo de audio</span>
+                    </label>
+                </div>
+                <button type="submit" class="submit-btn">Transcribir</button>
+            </form>
+            <div id="transcription-result" class="result-box"></div>
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="/js/audioPlayer.js"></script>
+    <script src="/js/tests.js"></script>
+    <script src="/js/audioTranscriber.js"></script>
     <script>
-        console.log('JavaScript cargado');
-        
-        function updateCharCount() {
-            const text = document.getElementById('text-input').value;
-            const length = new TextEncoder().encode(text).length;
-            document.getElementById('char-count').textContent = `${length}/5000 bytes`;
-        }
-
-        function showProgress() {
-            document.getElementById('progress').style.display = 'flex';
-            document.getElementById('submit-btn').style.display = 'none';
-        }
-
-        function hideProgress() {
-            document.getElementById('progress').style.display = 'none';
-            document.getElementById('submit-btn').style.display = 'block';
-        }
-
+        // Event listener del formulario
         document.getElementById('convert-form').addEventListener('submit', async function(event) {
             event.preventDefault();
-            const errorElement = document.getElementById('error-message');
-            errorElement.textContent = '';
-            
             const text = document.getElementById('text-input').value;
-            console.log('Enviando texto:', text);
-
             if (!text.trim()) {
-                errorElement.textContent = 'Por favor, ingresa algún texto';
+                showError('Por favor, ingresa algún texto');
                 return;
             }
 
+            showProgress();
+            clearError();
+
             try {
-                showProgress();
-                
-                const response = await fetch('/convert', {
+                const response = await fetch('/convert-stream', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ text: text })
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || errorData.details || 'Error en la conversión');
+                    throw new Error('Error en la conversión');
                 }
 
-                // Descargar el audio
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                window.audioPlayer.setAudio(url);
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
 
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value);
+                    const events = chunk.split('\n\n');
+
+                    for (const event of events) {
+                        if (event.startsWith('data: ')) {
+                            const data = JSON.parse(event.slice(6));
+                            
+                            if (data.error) {
+                                showError(data.error);
+                                continue;
+                            }
+
+                            if (data.audioContent) {
+                                createAudioPlayer({
+                                    url: `data:audio/mp3;base64,${data.audioContent}`,
+                                    partNumber: data.partNumber,
+                                    totalParts: data.totalParts
+                                });
+                            }
+                        }
+                    }
+                }
             } catch (error) {
-                console.error('Error:', error);
-                errorElement.textContent = error.message;
+                showError(error.message);
             } finally {
                 hideProgress();
             }
         });
+
+        function updateProgress(current, total) {
+            if (!total) return;
+            const progressText = document.querySelector('.progress-text');
+            progressText.textContent = `Generando audio... ${current}/${total}`;
+        }
+
+        function showProgress() {
+            document.getElementById('progress').style.display = 'flex';
+            document.getElementById('submit-btn').disabled = true;
+        }
+
+        function hideProgress() {
+            document.getElementById('progress').style.display = 'none';
+            document.getElementById('submit-btn').disabled = false;
+        }
+
+        function updateCharCount() {
+            const text = document.getElementById('text-input').value;
+            const length = text.length;
+            document.getElementById('char-count').textContent = `${length}/40000 caracteres`;
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+        }
+
+        function clearError() {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = '';
+        }
+
+        function createAudioPlayer(data) {
+            if (!data || !data.url) {
+                console.error('Datos inválidos para crear el reproductor:', data);
+                return;
+            }
+            
+            try {
+                new AudioPlayer({
+                    url: data.url,
+                    partNumber: data.partNumber,
+                    totalParts: data.totalParts
+                });
+            } catch (error) {
+                console.error('Error al crear el reproductor:', error);
+                showError('Error al crear el reproductor de audio');
+            }
+        }
     </script>
 </body>
 </html> 
